@@ -1,0 +1,158 @@
+environments:
+  test:
+    values:
+    - retentionPeriod: "168h"
+    - replicationFactor: 1
+    - maxReplicas:
+        ingester: 1
+        querier: 1
+        queryFrontend: 1
+        queryScheduler: 0
+        distributor: 1
+        indexGateway: 1
+        ruler: 1
+    - autoscaling: false
+    - canaryTest: false
+  prod:
+---
+repositories:
+  - name: grafana
+    url: https://grafana.github.io/helm-charts
+releases:
+  - name: loki
+    namespace: observability
+    createNamespace: true
+    forceNamespace: observability
+    chart: ./_charts/loki/loki/
+    version: v6.24.0
+    labels:
+      component: loki
+    values:
+      - loki:
+          auth_enabled: true
+          commonConfig:
+            replication_factor: {{ .Values | get "replicationFactor" 3 }}
+          podLabels:
+            "azure.workload.identity/use": "true"
+          schemaConfig:
+            configs:
+              - from: "2025-01-01"
+                store: tsdb
+                object_store: azure
+                schema: v13
+                index:
+                  prefix: loki_index_
+                  period: 24h
+          storage_config:
+            azure:
+              account_name: "corploki{{ .Environment.Name }}"
+              container_name: "corp-loki-{{ .Environment.Name }}-chunks"
+              use_federated_token: true
+          ingester:
+            chunk_encoding: snappy
+          tracing:
+            enabled: true
+          pattern_ingester:
+            enabled: true
+          limits_config:
+            allow_structured_metadata: true
+            volume_enabled: true
+            retention_period: {{ .Values | get "retentionPeriod" "730h"}}
+            ingestion_rate_mb: 12
+          compactor:
+            retention_enabled: true
+            delete_request_store: azure
+          ruler:
+            enable_api: true
+            storage:
+              type: azure
+              azure:
+                account_name: corploki{{ .Environment.Name }}
+                container_name: corp-loki-{{ .Environment.Name }}-ruler
+                use_federated_token: true
+              alertmanager_url: http://prom:9093
+          querier:
+            max_concurrent: 4
+          storage:
+            type: azure
+            bucketNames:
+              chunks: "corp-loki-{{ .Environment.Name }}-chunks"
+              ruler: "corp-loki-{{ .Environment.Name }}-ruler"
+              # admin: "admin-loki-devrel" # Your actual Azure Blob Storage container name (loki-azure-dev-admin)
+            azure:
+              accountName: corploki{{ .Environment.Name }}
+              useFederatedToken: true
+              # Define the Azure workload identity
+      - serviceAccount:
+          create: false
+          name: loki
+      - deploymentMode: Distributed
+      # https://grafana.com/docs/loki/latest/get-started/components/#loki-components
+      - ingester:
+          replicas: {{ .Values | get "maxReplicas.ingester" 3 }}
+          autoscaling:
+            enabled: {{ .Values | get "autoscaling" true }}
+            maxReplicas: {{ .Values | get "maxReplicas.ingester" 3 }}
+          zoneAwareReplication:
+            enabled: false
+      - querier:
+          replicas: {{ .Values | get "maxReplicas.querier" 3 }}
+          autoscaling:
+            enabled: {{ .Values | get "autoscaling" true }}
+            maxReplicas: {{ .Values | get "maxReplicas.querier" 3 }}
+          maxUnavailable: 1
+      - queryFrontend:
+          replicas: {{ .Values | get "maxReplicas.queryFrontend" 3 }}
+          autoscaling:
+            enabled: {{ .Values | get "autoscaling" true }}
+            maxReplicas: {{ .Values | get "maxReplicas.queryFrontend" 3 }}
+          maxUnavailable: 1
+      - queryScheduler:
+          # queryScheduler is stateless and is ok to run 2
+          replicas: {{ .Values | get "maxReplicas.queryScheduler" 2 }}
+      - distributor:
+          replicas: {{ .Values | get "maxReplicas.distributor" 3 }}
+          autoscaling:
+            enabled: {{ .Values | get "autoscaling" true }}
+            maxReplicas: {{ .Values | get "maxReplicas.distributor" 3 }}
+          maxUnavailable: 1
+      - compactor:
+          replicas: {{ .Values | get "maxReplicas.compactor" 1 }}
+      - indexGateway:
+          replicas: {{ .Values | get "maxReplicas.indexGateway" 3 }}
+          maxUnavailable: 1
+      - ruler:
+          replicas: {{ .Values | get "maxReplicas.ruler" 3 }}
+          maxUnavailable: 1
+      - chunksCache:
+          allocatedMemory: 1024
+          resources:
+            requests:
+              cpu: 20m
+      - resultsCache:
+          allocatedMemory: 1024
+          resources:
+            requests:
+              cpu: 20m
+      - gateway:
+          service:
+            type: ClusterIP
+          basicAuth:
+            enabled: false
+            #existingSecret: loki-basic-auth
+      - test:
+          enabled: false
+      - lokiCanary:
+          enabled: {{ .Values | get "canaryTest" true}}
+      - minio:
+          enabled: false
+      # Loki is in distributed mode
+      # All single-binary-mode replicas must be 0
+      - backend:
+          replicas: 0
+      - read:
+          replicas: 0
+      - write:
+          replicas: 0
+      - singleBinary:
+          replicas: 0

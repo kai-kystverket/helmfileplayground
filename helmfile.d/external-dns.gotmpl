@@ -1,0 +1,52 @@
+environments:
+  test:
+    values:
+      - azure:
+          subscriptionId: aaaaaaaa-bbbbbbb-ccccccc-dddddd-fffffff
+  prod:
+    values:
+      - azure:
+          subscriptionId: none
+      - resources:
+          cpu: 20m
+          memory: 50Mi
+---
+repositories:
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
+releases:
+  - name: external-dns
+    namespace: external-dns
+    createNamespace: true
+    forceNamespace: external-dns
+    chart: ./_charts/external-dns/external-dns/
+    version: v8.7.1
+    values:
+      - provider: azure
+      - azure:
+          useWorkloadIdentityExtension: true
+          tenantId: aaaaaaaa-bbbbbbb-ccccccc-dddddd-fffffff
+          subscriptionId: {{ .Values.azure.subscriptionId }}
+          resourceGroup: rg-dns
+      - txtOwnerId: external-dns
+      - domainFilters:
+          - {{.Environment.Name}}.corp.example.cloud
+      - podLabels:
+          azure.workload.identity/use: "true"
+      - serviceAccount:
+          create: false
+          name: external-dns
+      - extraArgs:
+          txt-wildcard-replacement: "wildcard"
+      - resources:
+          requests:
+            cpu: {{ .Values | get "resources.cpu" "10m"}}
+            memory: {{ .Values | get "resources.memory" "32Mi"}}
+          limits:
+            memory: {{ .Values | get "resources.memory" "32Mi"}}
+      - sources:
+          - istio-gateway
+          - istio-virtualservice
+          - gateway-httproute
+          - service
+          - ingress
