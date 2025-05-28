@@ -111,10 +111,10 @@ spec:
               type: RuntimeDefault
           resources:
             limits:
-              memory: 32Mi
+              memory: 80Mi
             requests:
-              cpu: 10m
-              memory: 32Mi
+              cpu: 30m
+              memory: 80Mi
           volumeMounts:
             - name: empty-dir
               mountPath: /tmp

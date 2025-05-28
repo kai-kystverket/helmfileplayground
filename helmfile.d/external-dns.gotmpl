@@ -3,13 +3,16 @@ environments:
     values:
       - azure:
           subscriptionId: aaaaaaaa-bbbbbbb-ccccccc-dddddd-fffffff
+      - resources:
+          cpu: 30m
+          memory: 80Mi
   prod:
     values:
       - azure:
           subscriptionId: none
       - resources:
-          cpu: 20m
-          memory: 50Mi
+          cpu: 60m
+          memory: 120Mi
 ---
 repositories:
   - name: bitnami
