@@ -1,0 +1,28 @@
+---
+# Source: loki/templates/query-frontend/hpa.yaml
+# Source: loki/templates/query-frontend/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: loki-query-frontend
+  namespace: observability
+  labels:
+    helm.sh/chart: loki-6.24.0
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/instance: loki
+    app.kubernetes.io/version: "3.3.2"
+    app.kubernetes.io/component: query-frontend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: loki-query-frontend
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60

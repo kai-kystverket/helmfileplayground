@@ -1,0 +1,19 @@
+---
+# Source: loki/templates/chunks-cache/poddisruptionbudget-chunks-cache.yaml
+# Source: loki/templates/chunks-cache/poddisruptionbudget-chunks-cache.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: loki-memcached-chunks-cache
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/instance: loki
+    app.kubernetes.io/component: memcached-chunks-cache
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: loki
+      app.kubernetes.io/instance: loki
+      app.kubernetes.io/component: memcached-chunks-cache
+  maxUnavailable: 1
