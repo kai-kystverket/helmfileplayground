@@ -38,3 +38,6 @@ fetch:
   just f ./helmfile.d/external-dns.gotmpl bitnami/external-dns
   just f ./helmfile.d/loki.gotmpl grafana/loki
   just f ./helmfile.d/opentelemetry-operator.gotmpl open-telemetry/opentelemetry-operator
+
+act EVENT="pull_request":
+  act {{EVENT}} -e event.json  -W update.yaml

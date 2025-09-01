@@ -1,0 +1,10 @@
+{
+  "pull_request": {
+    "head": {
+      "ref": "renovate/cert-manager"
+    },
+    "base": {
+      "ref": "main"
+    }
+  }
+}
