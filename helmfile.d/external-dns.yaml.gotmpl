@@ -1,15 +1,13 @@
 environments:
   test:
     values:
-      - azure:
-          subscriptionId: aaaaaaaa-bbbbbbb-ccccccc-dddddd-fffffff
+      - subscriptionId: aaaaaaaa-bbbbbbb-ccccccc-dddddd-fffffff
       - resources:
           cpu: 30m
           memory: 80Mi
   prod:
     values:
-      - azure:
-          subscriptionId: none
+      - subscriptionId: none
       - resources:
           cpu: 60m
           memory: 120Mi
@@ -22,14 +20,18 @@ releases:
     namespace: external-dns
     createNamespace: true
     forceNamespace: external-dns
+    {{- if not (eq .Environment.Name "default") }}
     chart: ./_charts/external-dns/external-dns/
+    {{else}}
+    chart: bitnami/external-dns
+    {{end}}
     version: v8.7.1
     values:
       - provider: azure
       - azure:
           useWorkloadIdentityExtension: true
           tenantId: aaaaaaaa-bbbbbbb-ccccccc-dddddd-fffffff
-          subscriptionId: {{ .Values.azure.subscriptionId }}
+          subscriptionId: {{ .Values | get "subscriptionid" ""}}
           resourceGroup: rg-dns
       - txtOwnerId: external-dns
       - domainFilters:
