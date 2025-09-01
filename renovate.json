@@ -5,6 +5,7 @@
     "**/_charts/**",
     "**/_rendered/**",
     "**/disabled/**",
+    "**/_ignore/**",
     "devbox.json"
   ]
 }
