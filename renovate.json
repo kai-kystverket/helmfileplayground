@@ -2,10 +2,9 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "ignorePaths": [
-    "**/_charts/**",
-    "**/_rendered/**",
-    "**/disabled/**",
-    "**/_ignore/**",
+    "helmfile.d/_charts/**",
+    "_rendered/**",
+    "helmfile.d/_ignore/**",
     "devbox.json"
   ]
 }
