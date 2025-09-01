@@ -10,11 +10,12 @@ releases:
     namespace: cert-manager
     createNamespace: true
     forceNamespace: cert-manager
-    {{- if eq .Environment.Name "default" }}
-    chart: jetstack/cert-manager
-    {{else}}
+    {{if false}}
     chart: ./_charts/cert-manager/cert-manager/
     {{end}}
+    {{- if eq .Environment.Name "default" }}
+    chart: jetstack/cert-manager
+    {{ end }}
     version: v1.16.2
     values:
       - crds:
